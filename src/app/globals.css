@@ -60,6 +60,16 @@ body {
   width: 80%;
 }
 
+@keyframes progress-full {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+.cold-start-bar-full {
+  animation: progress-full 1.2s ease-out 0.3s forwards;
+  width: 0%;
+}
+
 /* Form input styles */
 input:focus, textarea:focus {
   outline: none;

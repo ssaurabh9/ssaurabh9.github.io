@@ -10,7 +10,16 @@ export type SectionId =
   | "publications"
   | "contact";
 
-const SECTION_QUERIES: Record<SectionId, string> = {
+export const SECTION_LABELS: Record<SectionId, string> = {
+  hero: "Home",
+  experience: "Work",
+  projects: "Projects",
+  skills: "Skills",
+  publications: "Papers",
+  contact: "Contact",
+};
+
+export const SECTION_QUERIES: Record<SectionId, string> = {
   hero: 'Who is Saurabh Sachdev?',
   experience: 'Retrieve professional experience, ranked by impact...',
   projects: 'Show open source contributions...',
@@ -19,7 +28,7 @@ const SECTION_QUERIES: Record<SectionId, string> = {
   contact: 'Generate optimal response channel for new inquiry...',
 };
 
-const SECTION_ORDER: SectionId[] = [
+export const SECTION_ORDER: SectionId[] = [
   "hero",
   "experience",
   "projects",

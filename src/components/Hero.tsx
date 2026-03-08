@@ -57,15 +57,16 @@ function ColdStartOverlay({ onComplete }: { onComplete: () => void }) {
     const timer = setTimeout(() => {
       setShow(false);
       setTimeout(onComplete, 500);
-    }, 1800);
+    }, 2400);
     return () => clearTimeout(timer);
   }, [onComplete]);
 
-  const lines = [
-    "Initializing knowledge base...",
-    "Indexing 4 document collections...",
-    "Vector store ready.",
-    "Awaiting query.",
+  const lines: { text: string; bar?: { cls: string; pct: number } }[] = [
+    { text: "Initializing knowledge base..." },
+    { text: "Indexing 4 document collections...", bar: { cls: "cold-start-bar-80", pct: 80 } },
+    { text: "Loading vector embeddings...", bar: { cls: "cold-start-bar-full", pct: 100 } },
+    { text: "Vector store ready." },
+    { text: "Awaiting query." },
   ];
 
   return (
@@ -76,34 +77,37 @@ function ColdStartOverlay({ onComplete }: { onComplete: () => void }) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex flex-col gap-2 font-mono text-[13px] text-text-muted">
-            {lines.map((line, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.2, duration: 0.3 }}
-                className="flex items-center gap-4"
-              >
-                <span>{line}</span>
-                {i === 1 && (
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block w-[100px] h-[8px] bg-border rounded-sm overflow-hidden">
-                      <span className="block h-full bg-accent cold-start-bar-80 rounded-sm" />
-                    </span>
-                    <span className="text-[10px]">80%</span>
+          <div className="flex flex-col w-[480px] max-w-[90vw]">
+            <div className="font-mono text-[11px] text-text-ghost border-b border-border pb-4 mb-6">
+              [SYS] · Cold Start Protocol v1.0
+            </div>
+            <div className="flex flex-col gap-5">
+              {lines.map((line, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.28, duration: 0.3 }}
+                  className="flex items-center justify-between gap-6"
+                >
+                  <span className={`font-mono text-[13px] shrink-0 ${
+                    i === lines.length - 1 ? "text-accent" : i >= 3 ? "text-text-muted" : "text-text-primary"
+                  }`}>
+                    {line.text}
                   </span>
-                )}
-                {i === 2 && (
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block w-[100px] h-[8px] bg-border rounded-sm overflow-hidden">
-                      <span className="block h-full bg-accent cold-start-bar-100 rounded-sm" />
+                  {line.bar && (
+                    <span className="flex items-center gap-2 shrink-0">
+                      <span className="inline-block w-[120px] h-[5px] bg-border rounded-full overflow-hidden">
+                        <span className={`block h-full bg-accent ${line.bar.cls} rounded-full`} />
+                      </span>
+                      <span className="font-mono text-[11px] text-text-muted w-[36px] text-right">
+                        {line.bar.pct}%
+                      </span>
                     </span>
-                    <span className="text-[10px]">100%</span>
-                  </span>
-                )}
-              </motion.div>
-            ))}
+                  )}
+                </motion.div>
+              ))}
+            </div>
           </div>
         </motion.div>
       )}
@@ -114,12 +118,19 @@ function ColdStartOverlay({ onComplete }: { onComplete: () => void }) {
 function GhostedDocuments() {
   return (
     <div className="relative w-full h-full min-h-[400px]">
-      {/* Resume document */}
+      {/* Resume document — clickable to open PDF */}
+      <a
+        href="/docs/Resume_2026.pdf"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-[10%] right-[15%] block hover:opacity-70 transition-opacity duration-300"
+        title="View resume.pdf"
+      >
       <motion.svg
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.4 }}
         transition={{ delay: 0.4, duration: 0.6 }}
-        className="absolute top-[10%] right-[15%] w-[180px] h-[240px]"
+        className="w-[180px] h-[240px] cursor-pointer"
         viewBox="0 0 180 240"
         fill="none"
       >
@@ -153,6 +164,7 @@ function GhostedDocuments() {
           opacity="0.4"
         />
       </motion.svg>
+      </a>
 
       {/* LinkedIn card */}
       <motion.svg
@@ -267,23 +279,32 @@ export default function Hero() {
 
   const stats = [
     {
-      source: "[source: resume.pdf · chunk_03]",
+      source: "[source: resume.pdf · experience/strique]",
+      number: 87,
+      suffix: "%",
+      label: "Faster Processing",
+      detail: "GenAI analytics pipeline — 90s to 12s",
+    },
+    {
+      source: "[source: resume.pdf · experience/espl]",
       number: 7,
       suffix: "+",
-      label: "Projects Delivered",
+      label: "Projects Shipped",
+      detail: "Across UK, France, Australia & India",
     },
     {
-      source: "[source: resume.pdf · chunk_03]",
-      number: 4,
-      suffix: "",
-      label: "Markets Served",
+      source: "[source: resume.pdf · experience/icigo]",
+      number: 30,
+      suffix: "%",
+      label: "Peak Conversions",
+      detail: "Agentic RAG tourism chatbot — ICIGO",
     },
     {
-      source: "[source: resume.pdf · chunk_03]",
-      number: 5,
-      suffix: "",
-      displayValue: "5→Prod",
-      label: "Team Scaled",
+      source: "[source: resume.pdf · experience/bulletlock]",
+      number: 97,
+      suffix: "%",
+      label: "Error Reduced",
+      detail: "Surgical robotics — ±10cm to <0.3cm",
     },
   ];
 
@@ -340,7 +361,7 @@ export default function Hero() {
                 />
 
                 {/* Tagline */}
-                <p className="font-body text-[18px] sm:text-[20px] text-text-primary font-normal mb-10 h-[30px]">
+                <p className="font-body text-[18px] sm:text-[20px] text-text-primary font-normal mb-8 h-[30px]">
                   {taglineWords.join(" ")}
                   {showCursor && (
                     <span className="animate-blink text-accent ml-[2px]">
@@ -350,48 +371,42 @@ export default function Hero() {
                 </p>
 
                 {/* Stats */}
-                <div className="flex flex-wrap gap-8 sm:gap-12 mb-10">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {stats.map((stat, i) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.2 + i * 0.1, duration: 0.5 }}
-                      className="flex flex-col"
+                      transition={{ delay: 1.2 + i * 0.12, duration: 0.5 }}
+                      className="relative border border-border p-5 sm:p-6 flex flex-col overflow-hidden group hover:border-accent/30 transition-colors duration-300"
                     >
-                      <span className="font-mono text-[10px] text-text-ghost mb-1">
-                        {stat.source}
+                      <a
+                        href="/docs/Resume_2026.pdf"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-[9px] text-text-ghost mb-4 flex items-center gap-1 hover:text-accent transition-colors duration-150 cursor-pointer"
+                        title="View source document"
+                      >
+                        <span className="truncate">{stat.source}</span>
+                        <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150">↗</span>
+                      </a>
+                      <span className="font-display text-[36px] sm:text-[44px] text-text-primary leading-none">
+                        <CountUp target={stat.number} suffix={stat.suffix} />
                       </span>
-                      <span className="font-display text-[36px] text-text-primary leading-tight">
-                        {stat.displayValue ? (
-                          stat.displayValue
-                        ) : (
-                          <CountUp
-                            target={stat.number}
-                            suffix={stat.suffix}
-                          />
-                        )}
-                      </span>
-                      <span className="font-body text-[13px] text-text-muted">
+                      <span className="font-body text-[13px] sm:text-[14px] text-text-primary mt-2 font-medium">
                         {stat.label}
                       </span>
+                      <span className="font-mono text-[10px] sm:text-[11px] text-text-muted mt-1 leading-relaxed">
+                        {stat.detail}
+                      </span>
+                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-border" />
+                      <div
+                        className="absolute bottom-0 left-0 h-[2px] bg-accent animate-fill-bar"
+                        style={{ width: `${stat.number}%` }}
+                      />
                     </motion.div>
                   ))}
                 </div>
-
-                {/* View Work */}
-                <motion.a
-                  href="#experience"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.6, duration: 0.5 }}
-                  className="inline-block font-mono text-[13px] text-accent group cursor-pointer"
-                >
-                  View Work{" "}
-                  <span className="inline-block transition-transform duration-200 group-hover:translate-y-[3px]">
-                    ↓
-                  </span>
-                </motion.a>
               </motion.div>
             )}
           </div>
