@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #F5F2EB;
+  --text-primary: #141210;
+  --text-muted: #6B6760;
+  --text-ghost: #C4BFB7;
+  --accent: #2C5F4A;
+  --border: #D9D5CC;
+  --chunk-bg: rgba(44, 95, 74, 0.06);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--text-primary);
+  background: var(--bg);
+  font-family: var(--font-dm-sans), sans-serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-ghost);
+}
+
+/* Cold start progress bar animation */
+@keyframes progress-80 {
+  from { width: 0%; }
+  to { width: 80%; }
+}
+
+@keyframes progress-100 {
+  from { width: 80%; }
+  to { width: 100%; }
+}
+
+.cold-start-bar-80 {
+  animation: progress-80 0.8s ease-out forwards;
+}
+
+.cold-start-bar-100 {
+  animation: progress-100 0.4s ease-out 0.8s forwards;
+  width: 80%;
+}
+
+/* Form input styles */
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+}
+
+/* Horizontal rule draw animation */
+@keyframes draw-line {
+  from { width: 0; }
+  to { width: 280px; }
+}
+
+.animate-draw-line {
+  animation: draw-line 0.6s ease-out forwards;
+}
+
+/* SVG dash draw */
+.svg-draw {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: dash_draw_svg 1.5s ease-out forwards;
+}
+
+@keyframes dash_draw_svg {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Section base styles */
+.section-padding {
+  @apply py-[120px] px-6;
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    @apply py-[80px] px-4;
+  }
+}
+
+/* Similarity bar fill */
+@keyframes fill-bar {
+  from { width: 0; }
+}
+
+.animate-fill-bar {
+  animation: fill-bar 0.8s ease-out forwards;
+}
+
+/* Border trace animation */
+@keyframes trace-border {
+  0% { clip-path: inset(0 100% 100% 0); }
+  25% { clip-path: inset(0 0 100% 0); }
+  50% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+.animate-trace-border {
+  animation: trace-border 0.6s ease-out forwards;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
