@@ -1,0 +1,10 @@
+{
+  "ssaurabh9/taiga-mcp": {
+    "fields": [["stars", 4], ["forks", 5], ["open_issues", 3], ["language", "Python"]],
+    "ts": 1741392000000
+  },
+  "ssaurabh9/firefly-mcp": {
+    "fields": [["language", "Python"], ["visibility", "private"]],
+    "ts": 1741392000000
+  }
+}

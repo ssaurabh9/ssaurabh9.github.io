@@ -50,24 +50,78 @@ function CountUp({ target, suffix = "" }: { target: number; suffix?: string }) {
   );
 }
 
-function ColdStartOverlay({ onComplete }: { onComplete: () => void }) {
-  const [show, setShow] = useState(true);
+const PRELOADER_QUERY = "Who is Saurabh Sachdev?";
 
+// React-driven pct counter — starts when `active` flips true
+function AnimatedPct({ active, duration }: { active: boolean; duration: number }) {
+  const [pct, setPct] = useState(0);
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShow(false);
-      setTimeout(onComplete, 500);
-    }, 2400);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+    if (!active) return;
+    const steps = 50;
+    const interval = duration / steps;
+    let step = 0;
+    const t = setInterval(() => {
+      step++;
+      setPct(Math.round((step / steps) * 100));
+      if (step >= steps) clearInterval(t);
+    }, interval);
+    return () => clearInterval(t);
+  }, [active, duration]);
+  return <>{pct}%</>;
+}
 
-  const lines: { text: string; bar?: { cls: string; pct: number } }[] = [
+function ColdStartOverlay({ onComplete }: { onComplete: () => void }) {
+  // Bar 1: starts 500ms after mount, duration 1800ms → done at 2300ms
+  const BAR1_START = 200;
+  const BAR1_DUR   = 500;
+  const BAR2_START = BAR1_START + BAR1_DUR; // 700
+  const BAR2_DUR   = 500;
+  const QUERY_START = BAR2_START + BAR2_DUR + 100; // 1300
+
+  const [show, setShow] = useState(true);
+  const [bar1Active, setBar1Active] = useState(false);
+  const [bar2Active, setBar2Active] = useState(false);
+  const [typedQuery, setTypedQuery] = useState("");
+  const [queryPhase, setQueryPhase] = useState<"idle" | "typing" | "flying">("idle");
+  const queryTyped = typedQuery.length >= PRELOADER_QUERY.length;
+
+  const lines: { text: string; bar?: { active: boolean; duration: number } }[] = [
     { text: "Initializing knowledge base..." },
-    { text: "Indexing 4 document collections...", bar: { cls: "cold-start-bar-80", pct: 80 } },
-    { text: "Loading vector embeddings...", bar: { cls: "cold-start-bar-full", pct: 100 } },
+    { text: "Indexing 4 document collections...", bar: { active: bar1Active, duration: BAR1_DUR } },
+    { text: "Loading vector embeddings...",       bar: { active: bar2Active, duration: BAR2_DUR } },
     { text: "Vector store ready." },
     { text: "Awaiting query." },
   ];
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setBar1Active(true),  BAR1_START);
+    const t2 = setTimeout(() => setBar2Active(true),  BAR2_START);
+    const tq = setTimeout(() => setQueryPhase("typing"), QUERY_START);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(tq); };
+  }, [BAR1_START, BAR2_START, QUERY_START]);
+
+  // Typewriter
+  useEffect(() => {
+    if (queryPhase !== "typing") return;
+    if (typedQuery.length >= PRELOADER_QUERY.length) {
+      const t = setTimeout(() => setQueryPhase("flying"), 300);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(
+      () => setTypedQuery(PRELOADER_QUERY.slice(0, typedQuery.length + 1)),
+      25
+    );
+    return () => clearTimeout(t);
+  }, [queryPhase, typedQuery]);
+
+  useEffect(() => {
+    if (queryPhase !== "flying") return;
+    const t = setTimeout(() => {
+      setShow(false);
+      setTimeout(onComplete, 450);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [queryPhase, onComplete]);
 
   return (
     <AnimatePresence>
@@ -75,39 +129,78 @@ function ColdStartOverlay({ onComplete }: { onComplete: () => void }) {
         <motion.div
           className="fixed inset-0 z-[100] bg-bg flex items-center justify-center"
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.4 }}
         >
           <div className="flex flex-col w-[480px] max-w-[90vw]">
-            <div className="font-mono text-[11px] text-text-ghost border-b border-border pb-4 mb-6">
-              [SYS] · Cold Start Protocol v1.0
-            </div>
-            <div className="flex flex-col gap-5">
-              {lines.map((line, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.28, duration: 0.3 }}
-                  className="flex items-center justify-between gap-6"
-                >
-                  <span className={`font-mono text-[13px] shrink-0 ${
-                    i === lines.length - 1 ? "text-accent" : i >= 3 ? "text-text-muted" : "text-text-primary"
-                  }`}>
-                    {line.text}
-                  </span>
-                  {line.bar && (
-                    <span className="flex items-center gap-2 shrink-0">
-                      <span className="inline-block w-[120px] h-[5px] bg-border rounded-full overflow-hidden">
-                        <span className={`block h-full bg-accent ${line.bar.cls} rounded-full`} />
-                      </span>
-                      <span className="font-mono text-[11px] text-text-muted w-[36px] text-right">
-                        {line.bar.pct}%
-                      </span>
+            {/* Header + lines — fade out once query is fully typed */}
+            <motion.div
+              animate={{ opacity: queryTyped ? 0 : 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="font-mono text-[11px] text-text-ghost border-b border-border pb-4 mb-6">
+                [SYS] · Cold Start Protocol v1.0
+              </div>
+              <div className="flex flex-col gap-5">
+                {lines.map((line, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.28, duration: 0.3 }}
+                    className="flex items-center justify-between gap-6"
+                  >
+                    <span className={`font-mono text-[13px] shrink-0 ${
+                      i === lines.length - 1 ? "text-accent" : i >= 3 ? "text-text-muted" : "text-text-primary"
+                    }`}>
+                      {line.text}
                     </span>
-                  )}
+                    {line.bar && (
+                      <span className="flex items-center gap-2 shrink-0">
+                        <span className="inline-block w-[120px] h-[5px] bg-border rounded-full overflow-hidden">
+                          <motion.span
+                            className="block h-full bg-accent rounded-full"
+                            initial={{ width: "0%" }}
+                            animate={{ width: line.bar.active ? "100%" : "0%" }}
+                            transition={{ duration: line.bar.duration / 1000, ease: "easeOut" }}
+                          />
+                        </span>
+                        <span className="font-mono text-[11px] text-text-muted w-[36px] text-right">
+                          <AnimatedPct active={line.bar.active} duration={line.bar.duration} />
+                        </span>
+                      </span>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Query bar — types in, then flies slowly up to navbar */}
+            <AnimatePresence>
+              {queryPhase !== "idle" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={
+                    queryPhase === "flying"
+                      ? { opacity: 0, y: -380, scale: 0.9 }
+                      : { opacity: 1, y: 0, scale: 1 }
+                  }
+                  transition={
+                    queryPhase === "flying"
+                      ? { duration: 0.5, ease: [0.4, 0, 0.2, 1] }
+                      : { duration: 0.2 }
+                  }
+                  className="mt-6"
+                >
+                  <div className="rounded border border-border px-[14px] py-[6px] font-mono text-[12px] text-text-muted flex items-center gap-[6px]">
+                    <span className="shrink-0 text-text-ghost">&gt;</span>
+                    <span>{typedQuery}</span>
+                    {queryPhase === "typing" && (
+                      <span className="animate-blink text-accent shrink-0">&#9612;</span>
+                    )}
+                  </div>
                 </motion.div>
-              ))}
-            </div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       )}
@@ -232,31 +325,123 @@ function GhostedDocuments() {
   );
 }
 
+function SourceChunkModal({
+  chunk,
+  onClose,
+}: {
+  chunk: { title: string; source: string; text: string; highlight: string };
+  onClose: () => void;
+}) {
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  // Highlight the matching text
+  const parts = chunk.text.split(new RegExp(`(${chunk.highlight.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-[90] flex items-center justify-center px-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-bg/80 backdrop-blur-sm" onClick={onClose} />
+
+        {/* Modal */}
+        <motion.div
+          className="relative w-full max-w-[520px] border border-border bg-bg shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+          initial={{ opacity: 0, y: 12, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 12, scale: 0.97 }}
+          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border px-5 py-3">
+            <span className="font-mono text-[11px] text-text-muted">
+              retrieved_chunk · relevance: 0.94
+            </span>
+            <button
+              onClick={onClose}
+              className="font-mono text-[11px] text-text-ghost hover:text-text-primary transition-colors"
+            >
+              [ESC]
+            </button>
+          </div>
+
+          {/* Source label */}
+          <div className="px-5 pt-4 pb-2">
+            <span className="font-mono text-[10px] text-accent">
+              {chunk.source}
+            </span>
+          </div>
+
+          {/* Section title */}
+          <div className="px-5 pb-3">
+            <span className="font-mono text-[13px] text-text-primary font-medium">
+              {chunk.title}
+            </span>
+          </div>
+
+          {/* Chunk text with highlight */}
+          <div className="px-5 pb-4 border-l-2 border-accent/40 ml-5">
+            <p className="font-mono text-[12px] text-text-muted leading-[1.7]">
+              {parts.map((part, i) =>
+                part.toLowerCase() === chunk.highlight.toLowerCase() ? (
+                  <mark
+                    key={i}
+                    className="bg-accent/20 text-accent px-[3px] py-[1px] rounded-sm font-medium"
+                  >
+                    {part}
+                  </mark>
+                ) : (
+                  <span key={i}>{part}</span>
+                )
+              )}
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t border-border px-5 py-3">
+            <span className="font-mono text-[10px] text-text-ghost">
+              page 1 · {chunk.source.split(" · ").slice(1).join(" · ")}
+            </span>
+            <a
+              href="/docs/Resume_2026.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-[10px] text-text-ghost hover:text-accent transition-colors flex items-center gap-1"
+            >
+              View full document <span>↗</span>
+            </a>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 export default function Hero() {
   const [coldStartDone, setColdStartDone] = useState(false);
   const [showContent, setShowContent] = useState(false);
   const [taglineWords, setTaglineWords] = useState<string[]>([]);
   const [showCursor, setShowCursor] = useState(false);
-
-  useEffect(() => {
-    // Check sessionStorage for cold start
-    if (typeof window !== "undefined") {
-      const hasPlayed = sessionStorage.getItem("coldStartPlayed");
-      if (hasPlayed) {
-        setColdStartDone(true);
-        setShowContent(true);
-        setTaglineWords(
-          "I build AI systems that go to production.".split(" ")
-        );
-        return;
-      }
-    }
-  }, []);
+  const [activeChunk, setActiveChunk] = useState<{
+    title: string;
+    source: string;
+    text: string;
+    highlight: string;
+  } | null>(null);
 
   const handleColdStartComplete = () => {
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("coldStartPlayed", "true");
-    }
     setColdStartDone(true);
     setTimeout(() => {
       setShowContent(true);
@@ -284,6 +469,12 @@ export default function Hero() {
       suffix: "%",
       label: "Faster Processing",
       detail: "GenAI analytics pipeline — 90s to 12s",
+      chunk: {
+        title: "ML Engineer, AV DEVS Solutions Pvt Ltd (Strique)",
+        source: "resume.pdf · experience/strique · Jan 2024 – Mar 2025",
+        text: "As sole contributor, engineered a production GenAI analytics pipeline (schema design → EDA → feature engineering → prompt design → microservice deployment); reduced summary generation time 87% – from 90s to under 12s.",
+        highlight: "87%",
+      },
     },
     {
       source: "[source: resume.pdf · experience/espl]",
@@ -291,6 +482,12 @@ export default function Hero() {
       suffix: "+",
       label: "Projects Shipped",
       detail: "Across UK, France, Australia & India",
+      chunk: {
+        title: "AI Solutions Architect, ESPL",
+        source: "resume.pdf · experience/espl · Apr 2025 – Present",
+        text: "Owned end-to-end delivery of 7 international AI projects across UK, France, Australia, and India as sole architect, covering requirements, solution design, development, and production deployment.",
+        highlight: "7 international AI projects",
+      },
     },
     {
       source: "[source: resume.pdf · experience/icigo]",
@@ -298,6 +495,12 @@ export default function Hero() {
       suffix: "%",
       label: "Peak Conversions",
       detail: "Agentic RAG tourism chatbot — ICIGO",
+      chunk: {
+        title: "AI Solutions Architect, ESPL",
+        source: "resume.pdf · experience/espl · Apr 2025 – Present",
+        text: "Engineered an agentic RAG tourism chatbot (ICIGO) using LangGraph, FastAPI, and React/Node.js, capturing 30% of peak-season conversions and driving 17% YoY revenue growth for the client.",
+        highlight: "30% of peak-season conversions",
+      },
     },
     {
       source: "[source: resume.pdf · experience/bulletlock]",
@@ -305,6 +508,12 @@ export default function Hero() {
       suffix: "%",
       label: "Error Reduced",
       detail: "Surgical robotics — ±10cm to <0.3cm",
+      chunk: {
+        title: "ML Consultant, Bullet Lock Co.",
+        source: "resume.pdf · experience/bulletlock · May 2022 – Dec 2023",
+        text: "Rebuilt a failing stereo camera depth-tracking pipeline for surgical robotics; reduced positional error 97% – from ±10cm to under 0.3cm – directly enabling accurate robotic instrument movement during live surgical procedures.",
+        highlight: "97%",
+      },
     },
   ];
 
@@ -380,16 +589,14 @@ export default function Hero() {
                       transition={{ delay: 1.2 + i * 0.12, duration: 0.5 }}
                       className="relative border border-border p-5 sm:p-6 flex flex-col overflow-hidden group hover:border-accent/30 transition-colors duration-300"
                     >
-                      <a
-                        href="/docs/Resume_2026.pdf"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-mono text-[9px] text-text-ghost mb-4 flex items-center gap-1 hover:text-accent transition-colors duration-150 cursor-pointer"
-                        title="View source document"
+                      <button
+                        onClick={() => setActiveChunk(stat.chunk)}
+                        className="font-mono text-[9px] text-text-ghost mb-4 flex items-center gap-1 hover:text-accent transition-colors duration-150 cursor-pointer text-left"
+                        title="View retrieved chunk"
                       >
                         <span className="truncate">{stat.source}</span>
                         <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150">↗</span>
-                      </a>
+                      </button>
                       <span className="font-display text-[36px] sm:text-[44px] text-text-primary leading-none">
                         <CountUp target={stat.number} suffix={stat.suffix} />
                       </span>
@@ -417,6 +624,14 @@ export default function Hero() {
           </div>
         </div>
       </div>
+
+      {/* Source chunk modal */}
+      {activeChunk && (
+        <SourceChunkModal
+          chunk={activeChunk}
+          onClose={() => setActiveChunk(null)}
+        />
+      )}
     </section>
   );
 }

@@ -43,7 +43,7 @@ body {
 /* Cold start progress bar animation */
 @keyframes progress-80 {
   from { width: 0%; }
-  to { width: 80%; }
+  to { width: 100%; }
 }
 
 @keyframes progress-100 {
@@ -52,7 +52,7 @@ body {
 }
 
 .cold-start-bar-80 {
-  animation: progress-80 0.8s ease-out forwards;
+  animation: progress-80 1.6s ease-out forwards;
 }
 
 .cold-start-bar-100 {
@@ -66,7 +66,7 @@ body {
 }
 
 .cold-start-bar-full {
-  animation: progress-full 1.2s ease-out 0.3s forwards;
+  animation: progress-full 1.2s ease-out 1.6s forwards;
   width: 0%;
 }
 
