@@ -155,7 +155,7 @@ function PipelineAnimation({
                 </span>
                 <span className="font-mono text-[11px] text-text-muted w-[36px] text-right">
                   <AnimatedPct
-                    active={state !== "pending"}
+                    active={true}
                     duration={step.duration}
                   />
                 </span>
