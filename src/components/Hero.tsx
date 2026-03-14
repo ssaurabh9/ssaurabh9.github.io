@@ -579,6 +579,45 @@ export default function Hero() {
                   )}
                 </p>
 
+                {/* Resume retrieve button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.0, duration: 0.4 }}
+                  className="mb-8"
+                >
+                  <a
+                    href="/docs/Resume_2026.pdf"
+                    download="Saurabh_Sachdev_Resume.pdf"
+                    className="group relative inline-flex items-center gap-3 border border-accent/40 bg-accent/[0.06] hover:bg-accent/[0.12] hover:border-accent px-5 py-3 transition-all duration-300"
+                  >
+                    {/* Pulsing left edge */}
+                    <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-accent animate-pulse" />
+
+                    <span className="font-mono text-[12px] text-accent">
+                      &gt;
+                    </span>
+                    <span className="font-mono text-[13px] text-text-primary group-hover:text-accent transition-colors duration-200 font-medium">
+                      retrieve
+                    </span>
+                    <span className="font-mono text-[13px] text-accent font-medium">
+                      resume.pdf
+                    </span>
+                    <svg
+                      className="w-4 h-4 text-accent transition-transform duration-300 group-hover:translate-y-[2px]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+                    </svg>
+                    <span className="font-mono text-[10px] text-accent/60 ml-1">
+                      [PDF · 1 doc]
+                    </span>
+                  </a>
+                </motion.div>
+
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {stats.map((stat, i) => (
